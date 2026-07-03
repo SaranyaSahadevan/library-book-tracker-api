@@ -11,6 +11,7 @@ import java.util.List;
 
 @Service
 public class BookService {
+
     private final BookRepository bookRepository;
 
     public BookService(BookRepository bookRepository) {
@@ -23,53 +24,105 @@ public class BookService {
                 request.getAuthor(),
                 request.getGenre(),
                 request.getPublicationYear(),
-                true
+                true,
+                false
         );
+
         Book savedBook = bookRepository.save(book);
         return mapToResponse(savedBook);
     }
 
     public List<BookResponse> getAllBooks() {
-        // TODO:
-        // Fetch all books from the repository
-        // Convert each Book entity into BookResponse DTO
-        // Return the list
-        return null;
+        return bookRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     public BookResponse getBookById(Long id) {
-        // TODO
-        // Find the book by its ID
-        // Throw RuntimeException if not found
-        // Convert the entity to BookResponse
-        return null;
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        return mapToResponse(book);
     }
 
     public BookResponse updateBook(Long id, UpdateBookRequest request) {
-        // TODO
-        // Find existing book
-        // Update its fields
-        // Save the updated entity
-        // Convert to BookResponse
-        return null;
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        book.setTitle(request.getTitle());
+        book.setAuthor(request.getAuthor());
+        book.setGenre(request.getGenre());
+        book.setPublicationYear(request.getPublicationYear());
+        book.setAvailable(request.isAvailable());
+
+        Book updatedBook = bookRepository.save(book);
+
+        return mapToResponse(updatedBook);
     }
 
     public void deleteBook(Long id) {
-        // TODO
+        bookRepository.deleteById(id);
+    }
+    public BookResponse borrowBook(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        book.setBorrowedStatus(true);
+        book.setAvailable(false);
+
+        return mapToResponse(bookRepository.save(book));
+    }
+
+    public BookResponse returnBook(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        book.setBorrowedStatus(false);
+        book.setAvailable(true);
+
+        return mapToResponse(bookRepository.save(book));
     }
 
     public List<BookResponse> findByAuthor(String author) {
-        // TODO
-        return null;
-    }
+        return bookRepository.findByAuthor(author)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
 
-    public List<BookResponse> findAvailableBooks(){
-        // TODO
-        return null;
+    }
+    public List<BookResponse> findBooksPublishedAfter(int year) {
+        return bookRepository.findByPublicationYearGreaterThan(year)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    public List<BookResponse> findByTitle(String title) {
+        return bookRepository.findByTitleContainingIgnoreCase(title)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+    public List<BookResponse> findAvailableBooks() {
+        return bookRepository.findByAvailableTrue()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+        public long getBookCount() {
+            return bookRepository.count();
+
     }
 
     private BookResponse mapToResponse(Book book) {
-        // TODO: map Book to BookResponse
-        return null;
+        return new BookResponse(
+                book.getId(),
+                book.getTitle(),
+                book.getAuthor(),
+                book.getGenre(),
+                book.getPublicationYear(),
+                book.isAvailable(),
+                book.isBorrowedStatus()
+        );
     }
-}
+    }
