@@ -1,0 +1,10 @@
+### Create Book
+POST http://localhost:8080/api/books
+Content-Type: application/json
+
+{
+  "title": "Spring Boot",
+  "author": "John Smith",
+  "genre": "Programming",
+  "publicationYear": 2024
+}
